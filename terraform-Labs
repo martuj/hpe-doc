@@ -1,0 +1,126 @@
+Terraform Labs Steps
+====================
+Login to AWS Console
+###################################
+Lab 1: Creating an EC2 Instance in AWS and Installing Terraform
+###################################
+
+Task 1: Installing Terraform on Ubuntu 22.04 operating system
+=============================================================
+Launch a t2.micro instance with OS version Ubuntu 20.04 (North Virginia / us-east-1)
+In sec group, include ports 22 and 80. Use tag 'Name:Terraform'
+
+login with username as ubuntu
+
+After EC2 is ready:
+
+sudo hostnamectl set-hostname terraform
+# Hostname will appear if you exit and login again. Or you can type 'bash' and open another shell
+
+sudo apt update
+sudo apt install wget unzip -y
+
+wget https://releases.hashicorp.com/terraform/1.7.5/terraform_1.7.5_linux_amd64.zip
+unzip terraform_1.7.5_linux_amd64.zip
+
+ls
+sudo mv terraform /usr/local/bin
+ls
+terraform
+terraform -v
+
+
+Task 2: Install and login to Ubuntu server from AWS EC2 Instance 
+======================================================
+
+sudo apt-get install python3-pip -y
+sudo pip3 install awscli
+
+aws configure
+Add AKID
+Add SAK
+
+aws s3 ls
+
+Task-2.1:# Now we are ready to perform the labs
+#########################################
+create directory as Lab1
+
+create local file
+---------------------
+vi local.tf
+
+resource	"local_file"  "myfile"  {
+
+	filename = "/home/ubuntu/test.txt"
+	content  = "wel come to terraform"
+}
+
+terraform init
+terraform plan
+terraform apply
+
+#########################################
+
+###################################
+Task 3: Launching your first AWS EC2 instance using Terraform 
+###################################
+
+mkdir terraform-labs && cd terraform-labs/
+
+vi example.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+provider "aws" {
+  profile = "default" # This line is not mandatory.
+  region  = "us-east-2"
+}
+
+resource "aws_instance" "example" {
+  ami           = "ami-07efac79022b86107"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "Yourname-TF-1"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply
+
+ls
+cat terraform.tfstate
+
+# Now, change the AMI id
+vi example.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+provider "aws" {
+  profile = "default"
+  region  = "us-east-2"
+}
+
+resource "aws_instance" "example" {
+  ami           = "ami-0e82959d4ed12de3f"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "Yourname-TF-1"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+terraform plan
+terraform apply
+cat terraform.tfstate
+
+# Use the "terraform destroy" command for cleaning the infrastructure used in this lab
+terraform destroy
