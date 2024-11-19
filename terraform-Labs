@@ -362,3 +362,280 @@ terraform destroy
 
 cd ..
 rm -rf remote-state-lab
+
+#######################################
+Lab 5 : Launching VPC and EC2 Instance 
+#######################################
+
+Task 1: Launching VPC and creating subnets
+==========================================
+
+cd /home/ubuntu/
+wget https://s3.ap-south-1.amazonaws.com/files.cloudthat.training/devops/terraform-essentials/lab_10_vpc_v0.13.tar.gz
+tar -xvf lab_10_vpc_v0.13.tar.gz
+
+cd lab_10_vpc/
+ls
+
+cat vpc.tf
+cat nat.tf
+cat vars.tf
+
+terraform init
+terraform plan
+terraform apply -auto-approve
+ 
+
+Task 2: Launching an EC2 Instance 
+=================================
+vi instance.tf 
+
+# Add the given lines, by pressing "INSERT" 
+
+resource "aws_instance" "example" {
+  ami           = var.AMIS[var.AWS_REGION]
+  instance_type = "t2.micro"
+  # the VPC subnet
+  subnet_id = aws_subnet.main-public-1.id
+  # the security group
+  vpc_security_group_ids = [aws_security_group.allow-ssh.id]
+  # the public SSH key
+  key_name = aws_key_pair.mykeypair.key_name
+  tags = {
+    Name = "Yourname-Lab11-ec2"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+vi securitygroup.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+resource "aws_security_group" "allow-ssh" {
+  vpc_id      = aws_vpc.main.id
+  name        = "yourname-allow-ssh"
+  description = "security group that allows ssh and all egress traffic"
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name = "yourname-allow-ssh"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+ssh-keygen -f mykey
+ls
+vi key.tf
+
+# Add the given lines, by pressing "INSERT" 
+
+resource "aws_key_pair" "mykeypair" {
+  key_name   = "yourname-keypair"
+  public_key = file(var.PATH_TO_PUBLIC_KEY)
+}
+
+# save the file using "ESCAPE + :wq!"
+
+vi vars.tf
+
+# Add the given lines, by pressing "INSERT" 
+# First 3 lines are already present. you can add the remaining lines.
+
+variable "AWS_REGION" {
+  default = "us-east-2"
+}
+
+variable "PATH_TO_PUBLIC_KEY" {
+  default = "mykey.pub"
+}
+
+variable "AMIS" {
+  type = map(string)
+  default = {
+    us-east-2 = "ami-059d836af932792c3"
+    us-west-2 = "ami-0a7d051a1c4b54f65"
+    eu-west-1 = "ami-04c58523038d79132"
+  }
+}
+
+
+# save the file using "ESCAPE + :wq!"
+
+terraform fmt
+terraform validate
+terraform plan
+terraform apply -auto-approve
+
+# see details of the specific resource
+terraform state show aws_instance.example | grep public_ip
+
+ssh -i mykey -l ubuntu <Your Public IP>
+
+exit
+
+
+Task 3: Connecting an EBS with EC2 Instance 
+===========================================
+
+vi instance.tf 
+
+# Add the given lines, by pressing "INSERT" 
+# First block will be already present in the file
+
+resource "aws_instance" "example" {
+  ami = var.AMIS[var.AWS_REGION]
+  instance_type = "t2.micro"
+  # the VPC subnet
+  subnet_id = aws_subnet.main-public-1.id
+  # the security group
+  vpc_security_group_ids = [aws_security_group.allow-ssh.id]
+  # the public SSH key
+  key_name = aws_key_pair.mykeypair.key_name
+  tags = {
+    Name = "yourname-Lab11-EC2"
+  }
+}
+
+resource "aws_ebs_volume" "ebs-volume-1" {
+ availability_zone = "us-east-2a"
+ size = 20
+ type = "gp2"
+ tags = {
+   Name = "Yourname extra volume"
+ }
+}
+
+resource "aws_volume_attachment" "ebs-volume-1-attachment" {
+  device_name = "/dev/xvdh"
+  volume_id = aws_ebs_volume.ebs-volume-1.id
+  instance_id = aws_instance.example.id
+} 
+
+# save the file using "ESCAPE + :wq!"
+
+terraform apply
+
+Login to ec2 dashboard. select the ec2. go to storage and see that the new volume is attached
+ssh -i mykey ubuntu@<PUBLIC IP>
+
+
+# Use the "terraform destroy" command for cleaning the infrastructure used in this lab, remove the 
+  directory using rm -rf
+
+terraform destroy -auto-approve
+
+cd ..
+rm -rf lab_10_vpc
+
+
+
+###################################
+Lab-6: Launching auto scaling services
+###################################
+
+Task 1: Create ASG
+-------------------
+cd /home/ubuntu/
+
+wget https://s3.ap-south-1.amazonaws.com/files.cloudthat.training/devops/terraform-essentials/lab_14_autoscaling.tar.gz
+tar -zxvf lab_14_autoscaling.tar.gz
+cd lab_14_autoscaling/
+
+ls
+vi autoscaling.tf
+Update the names/tags to include your name
+
+vi autoscalingpolicy.tf
+Update the names/tags to include your name
+
+ssh-keygen -f mykey
+ls
+
+terraform init
+terraform plan
+terraform apply 
+
+
+Task 2: Increase CPU utilization in your new ec2 instance.
+----------------------------------------------------------
+ssh -i mykey -l ubuntu <Public IP> 
+
+sudo apt-get update
+sudo apt-get install stress
+
+# 2 workers spawning sqrt() function. will do for 300 seconds
+
+stress --cpu 3 -v --timeout 300
+
+Follow digify document to observe the metrics for ec2 and the alrams in cloudwatch
+
+
+# Now go back to AWS console > Services > EC2 > Instances and select your instance. Go to its description 
+  and click on Monitoring. You see High CPU utilization  
+# Go to AWS console > Services > CloudWatch > Alarms and view alarm  
+# Go to AWS console > Services > EC2 > Instances. You can see that one more instance is created with same 
+  name.  
+
+
+terraform destroy
+
+###################################
+Lab-7: Launching ELB with autoscaling 
+###################################
+cd /home/ubuntu/
+
+wget https://s3.ap-south-1.amazonaws.com/files.cloudthat.training/devops/terraform-essentials/lab_15_elb_with_autoscaling.tar.gz
+tar -zxvf lab_15_elb_with_autoscaling.tar.gz
+cd lab_15_elb_with_autoscaling/
+
+ls
+vi autoscaling.tf
+
+#In block resource "aws_launch_configuration" "example-launchconfig", replace below line
+user_data = "#!/bin/bash\napt-get update\napt-get -y install nginx\nMYIP=`hostname -I | awk '{print $1}' | cut -d ':' -f2`\necho '<html><h1> Welcome to terraform training </h1></html> IP address of this EC2 is' $MYIP > /var/www/html/index.html"
+
+cat elb.tf
+cat securitygroup.tf
+cat output.tf
+
+# change the tags to include your name. change the key pair name to include your name
+
+ssh-keygen -f mykey
+ls
+
+terraform init
+terraform fmt
+terraform plan
+terraform apply
+
+curl <dns_name>
+host <dns_name>
+curl <public IP of any instance>
+
+
+# Now go back to AWS console > Services > EC2 > Instances and check that two new instances are created.
+
+# Go to AWS console > Services > EC2 > Load Balancers
+
+# Go back to AWS console > Services > EC2 > Instances and terminate one of your instances 
+
+# Go back to AWS console > Services > EC2 > Load Balancers. Select your load balancer and go to description. 
+# Click on instances and verify the status (in service). 
+
+curl <dns_name>
+terraform destroy -auto-approve
+
