@@ -188,6 +188,123 @@ restart the prometheus service
 
 sudo systemctl restart  prometheus
 
+====================================================
+Install Grafana
+=====================================================
+
+sudo apt-get install -y apt-transport-https software-properties-common wget
+
+sudo mkdir -p /etc/apt/keyrings/
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+
+# Updates the list of available packages
+sudo apt-get update
+
+# Installs the latest OSS release:
+sudo apt-get install Grafana
+
+# Installs the latest Enterprise release:
+sudo apt-get install grafana-enterprise
+
+sudo systemctl start grafana-server
+sudo systemctl enable grafana-server
+sudo systemctl status grafana-server
+
+access using publicip and port no
+ex: http://34.239.126.218:9090/
+
+Task:-1 Install docker.
+==============
+
+sudo apt-get update
+sudo apt install docker.io -y
+docker –version
+systemctl status docker
+
+
+Task:2 Install Jenkins using Docker Image
+==========================================
+
+sudo mkdir  /jenkins_home
+sudo chmod 777 /jenkins_home
+ls  -ld  /jenkins_home
+
+install the Jenkins using the below command
+==============================================
+
+sudo docker run -d -t -p 8080:8080 -p 50000:50000 -v /jenkins_home:/var/jenkins_home  jenkins/jenkins:lts-jdk11
+ 
+
+description of command
+----------------------
+• -p port maping 8080 -for Jenkins
+• -d port run the container in background.
+• -t docker to keep the container running.
+• -p maping 50000  -for agents 
+• -v  volume for storing data locally i.e /jenkins_home need to be created
+• /var/jenkins_home maping to local dir
+• Jenkins:lts-jdk11 -image and tag
+
+Run the below command to get the container ID
+------------------------------------
+sudo docker ps
+
+
+
+###############################
+Lab 3: Configure Jenkins
+###############################
+
+
+Now login into the Jenkins  container using below command and get the 
+password for Jenkins server using cat command and path.
+---------------------------------------------
+
+sudo docker exec -it containerid /bin/bash
+
+cat /var/jenkins_home/secrets/initialAdminPassword
+ 
+
+# Now, go to the browser and enter Jenkins URL 
+http://54.173.143.232:8080/
+http://public-ip-ofinstance:8080/
+
+# Under Unlock Jenkins, enter the above Initial password. Continue.
+Click on Install suggested Plugins on Customize Jenkins page.
+
+# Once the plugins are installed, it gives you the page where you can create new admin user id 
+# and password. 
+
+Enter user id and password. Save & Continue. 
+# To keep things easier for this training, you may use the same user
+# id and password which you used for Github. Needless to say, in real life, you must keep the user 
+# ids and passwords separate.
+
+In next step, on Instance Configuration Page, verify your Jenkins Public IP and Port Number then 
+click on Save and Finish
+
+# You will be prompted to the Jenkins Home Page
+
+Click on Manage Jenkins > Manage Plugins
+
+Under Manage Plugins, go to the Available tab and search for 'prometheus metrics'. Select the Maven Integration 
+Plugin and Unleash Maven Plugin and click Install without restart
+
+if it ask for restart , you can restart it or if you want to restaet manualy
+run this command 
+
+docker restart containerid
+
+docker ps
+
+Once the installation is completed, click on Go back to the top page
+
+
+
 
 
  
