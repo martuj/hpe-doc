@@ -1,0 +1,42 @@
+TASK:1
+------------------
+
+Lab:1
+------
+
+- create ec2 instance image ubuntu22.04 and add port 9090,9100,22,80,443
+
+
+Once you login
+
+Set hostname as Prometheus-node1
+------------------------------
+sudo su -
+
+sudo hostnamectl set-hostname prometheus-node1
+
+- install prometheus 
+------------------------
+
+donwload the prometheus
+---------------------------
+wget https://github.com/prometheus/prometheus/releases/download/v2.39.1/prometheus-2.39.1.linux-amd64.tar.gz
+
+unzip the link
+----------------------
+
+tar -xvzf prometheus-2.39.1.linux-amd64.tar.gz
+
+verify the file and run the prometheus
+------------------------------------
+ls
+cd prometheus-2.39.1.linux-amd64/
+ls
+ run the proemtheus
+ ./prometheus
+
+ get ec2-instace public ip and portno
+
+ prese ctrl+c to stops
+
+ 
