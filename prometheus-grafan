@@ -99,6 +99,95 @@ similarly go_info
 
 time series database (tsdb) status
 
+Lab:2: Install Node Exporter on the same system.
+----------------------------
+
+go to home dir
+-------------------
+cd /root
+
+download node exporter
+------------------
+ wget https://github.com/prometheus/node_exporter/releases/download/v1.4.0/node_exporter-1.4.0.linux-amd64.tar.gz
+
+extract the file
+---------------------
+tar -xvzf node_exporter-1.4.0.linux-amd64.tar.gz
+
+ls
+copy the file to bin
+----------------------------
+sudo cp node_exporter-1.4.0.linux-amd64/node_exporter /usr/local/bin
+
+verify the files are copied 
+---------------------------
+ls /usr/local/bin/
+
+
+create service file for node exporter
+--------------------------
+
+sudo vi /etc/systemd/system/node-exporter.service
+
+
+[Unit]
+Description=Prometheus Node Exporter Service
+After=network.target
+
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+
+[Install]
+WantedBy=multi-user.target
+
+save the file
+
+reload the service
+---------------
+sudo systemctl daemon-reload
+
+sudo systemctl start node-exporter.service
+sudo systemctl status node-exporter.service
+sudo systemctl enable node-exporter.service
+
+
+now go to browser and check you can able to access node exporter port no=9100
+-------------------------------------------
+
+http://43.204.149.136:9100/
+
+
+
+ Configure prometheus configuration file.
+-------------------------------------------
+Go to prometheus server
+
+now configure prometheus yml file go to
+/usr/local/bin/prometheus
+
+open  
+sudo vi prometheus.yml
+
+at the end of the file add the job as following make sure indentation should be same
+--------------
+   
+      -targets: ['localhost:9090']    # add below this line
+    - job_name: "node_exporter"
+      scrape_interval: 1m
+      scrape_timeout: 1m
+      static_configs:
+        - targets: ['localhost:9100']
+
+
+save the file 
+
+restart the prometheus service
+---------------------------
+
+sudo systemctl restart  prometheus
+
 
 
  
